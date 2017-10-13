@@ -1,0 +1,402 @@
+#!/usr/bin/env perl
+#niko h[ost]i[nfo]
+
+use strict;
+use warnings;
+use utf8;
+use 5.010;
+
+my $VERSION = '0.3';
+
+my %FONTS = (
+   default => {
+      charset => " abcdefghijklmnopqrstuvwxyz0123456789?\!#+-*\\/()[]{}.:,;\"'=",
+      bmp     => [
+[qw/.. ███ ███ ███ ██. ███ ███ ███ █.█ █ ..█ █.█ █.. █.█ ██. ███ ███ ███ ███ ███ ███ █.█ █.█ █.█ █.█ █.█ ███ .█. ..█ ██. ██. █.. ███ █.. ███ ███ ███ ███ █ █.█ ... ... ... ... ... .█ █. .██ ██. .██ ██. . ... .. .. █.█ █ .../],
+[qw/.. █.█ █.█ █.. █.█ █.. █.. █.. █.█ . ..█ █.█ █.. ███ █.█ █.█ █.█ █.█ █.█ █.. .█. █.█ █.█ █.█ █.█ █.█ ..█ █.█ .██ ..█ ..█ █.█ █.. █.. ..█ █.█ █.█ ..█ █ ███ .█. ... █.█ █.. ..█ █. .█ .█. .█. .█. .█. . .█. .. .█ █.█ █ ███/],
+[qw/.. ███ ██. █.. █.█ ██. ██. █.█ ███ █ ..█ ██. █.. ███ █.█ █.█ ███ █.█ ██. ███ .█. █.█ █.█ ███ .█. ███ .█. █.█ █.█ .█. .█. ███ ██. ███ .█. ███ ███ .██ █ █.█ ███ ███ .█. .█. .█. █. .█ .█. .█. █.. ..█ . ... .. .. ... . .../],
+[qw/.. █.█ █.█ █.. █.█ █.. █.. █.█ █.█ █ █.█ █.█ █.. █.█ █.█ █.█ █.. ███ █.█ ..█ .█. █.█ █.█ ███ █.█ .█. █.. █.█ ..█ █.. ..█ ..█ ..█ █.█ █.. █.█ ..█ ... . ███ .█. ... █.█ ..█ █.. █. .█ .█. .█. .█. .█. . .█. .█ .█ ... . ███/],
+[qw/.. █.█ ███ ███ ███ ███ █.. ███ █.█ █ ███ █.█ ███ █.█ █.█ ███ █.. ..█ █.█ ███ .█. ███ .█. █.█ █.█ .█. ███ .█. ..█ ███ ██. ..█ ██. ███ █.. ███ ..█ .█. █ █.█ ... ... ... ... ... .█ █. .██ ██. .██ ██. █ ... █. █. ... . .../],
+      ],
+   },
+   perl => {
+      charset => " abcdefghijklmnopqrstuvwxyz0123456789?\!#+-*\\/()[]{}.:,;\"'=",
+      bmp     => [
+[split ' ','.. .##. ###. .### ###. #### #### .##. #..# # ...# #..# #... #...# #..# .##. ###. .##. ###. .### ##### #..# #...# #...# #...# #...# ##### .#. ..# ##. ##. #.. ### #.. ### ### ### ### # #.# ... ... ... ... ... .# #. .## ##. .## ##. . ... .. .. #.# # ...'],
+[split ' ','.. #..# #..# #... #..# #... #... #..  #..# . ...# #..# #... ##.## ##.# #..# #..# #..# #..# #... ..#.. #..# #...# #...# .#.#. .#.#. ...#. #.# .## ..# ..# #.# #.. #.. ..# #.# #.# ..# # ### .#. ... #.# #.. ..# #. .# .#. .#. .#. .#. . .#. .. .# #.# # ###'],
+[split ' ','.. #### ###. #... #..# ###. ###. #.## #### # ...# ###. #... #.#.# #.## #..# ###. #..# ###. .##. ..#.. #..# #...# #.#.# ..#.. ..#.. ..#.. #.# #.# .#. .#. ### ##. ### .#. ### ### .## # #.# ### ### .#. .#. .#. #. .# .#. .#. #.. ..# . ... .. .. ... . ...'],
+[split ' ','.. #..# #..# #... #..# #... #... #..# #..# # #..# #..# #... #...# #..# #..# #... #.## #..# ...# ..#.. #..# .#.#. ##.## .#.#. ..#.. .#... #.# ..# #.. ..# ..# ..# #.# #.. #.# ..# ... . ### .#. ... #.# ..# #.. #. .# .#. .#. .#. .#. . .#. .# .# ... . ###'],
+[split ' ','.. #..# ###. .### ###. #### #... .##. #..# # .##. #..# #### #...# #..# .##. #... .### #..# ###. ..#.. .##. ..#.. #...# #...# ..#.. ##### .#. ..# ### ##. ..# ##. ### #.. ### ..# .#. # #.# ... ... ... ... ... .# #. .## ##. .## ##. # ... #. #. ... . ...'],
+      ],
+   }
+);
+
+my %COLORS = (
+   black   => [0,0,0],          bright_black   => [0x82,0x82,0x82],
+   red     => [0xbf,0x79,0x79], bright_red     => [0xf4,0xa4,0x5f],
+   green   => [0x97,0xb2,0x6b], bright_green   => [0xc5,0xf7,0x79],
+   yellow  => [0xcd,0xcd,0xa1], bright_yellow  => [0xff,0xff,0xaf],
+   blue    => [0x86,0xa2,0xbe], bright_blue    => [0x98,0xaf,0xd9],
+   magenta => [0x96,0x3c,0x59], bright_magenta => [0xef,0x9e,0xbe],
+   cyan    => [0x7f,0x9f,0x7f], bright_cyan    => [0x71,0xbe,0xbe],
+   white   => [0xde,0xde,0xde], bright_white   => [0xff,0xff,0xff],
+   grey    => [0x82,0x82,0x82],
+);
+
+my %SYSCOLORNAMES = (
+   black   => 30, bright_black   => 90, 
+   red     => 31, bright_red     => 91,
+   green   => 32, bright_green   => 92,
+   yellow  => 33, bright_yellow  => 93,
+   blue    => 34, bright_blue    => 94,
+   magenta => 35, bright_magenta => 95,
+   cyan    => 36, bright_cyan    => 96,
+   white   => 37, bright_white   => 97,
+);
+
+### PARSE ARGS
+
+my( $fg, $bg, $fglab, $font , $small, $fontname, $info, $help, $txt, $colormode );
+
+for( my $n=0; $n<@ARGV; $n++ ) {
+   my $a = $ARGV[$n];
+   if( $a =~ m/^--?(\w+)=?(.*)?$/ ) {
+      my( $a1, $a2 ) = ( $1, $2 );
+      if(    $a1 =~ /^(foreground|fg)$/i ) { $fg = $a2 || $ARGV[++$n] }
+      elsif( $a1 =~ /^(background|bg)$/i ) { $bg = $a2 || $ARGV[++$n] }
+      elsif( $a1 =~ /^f(ont(name)?)?$/i )  { $fontname = $a2 || $ARGV[++$n] }
+      elsif( $a1 =~ /^i(nfo)?$/i )         { $info = $a2 || $ARGV[++$n] }
+      elsif( $a1 =~ /^m(ono)?$/i )         { $colormode = 1 }
+      elsif( $a1 =~ /^c(olors?)?$/i )      { $colormode = $a2 || $ARGV[++$n] }
+      elsif( $a1 =~ /^(1|16|256)$/ )       { $colormode = $a1 }
+      elsif( $a1 =~ /^s(mall)?$/i )        { $small = 1 }
+      elsif( $a1 =~ /^h(elp)?$/i )         { $help = 1 }
+      else { die "unknown option -$a1\n" }
+   } else {
+      $txt = length($txt) ? "$txt $a" : $a;
+   }
+}
+
+### HELP
+
+if( $help ) {
+   my $fontlist = join(',', sort keys %FONTS);
+   my $colorlist = join(',', sort keys %COLORS);
+   die <<EOHELP
+hi $VERSION
+
+ syntax: hi [-options] [text]
+
+default text is your hostname
+
+options:
+  -fg=color         foreground color/gradient
+  -bg=color         background color/gradient (not supported yet)
+  -c[olor]=1|16|256 set color mode
+  -1|16|256         set color mode as well
+  -m[ono]           set color mode to 1
+  -s[mall]          set small mode
+  -font=default     font name (avalaible: $fontlist)
+  -i[nfo]=kumic     choose info to display
+
+infos can be given as follow:
+   k=kernel   u=uptime   c=cpumodel
+   m=memory   i=ip
+
+color can be given as follow:
+   name          eg: green
+   d,d,d         eg: 0,255,0
+   h:h:h         eg: 0:ff:0
+   hhhhhh        eg: 00ff00
+   hhh           eg: 0f0
+
+gradient can be given as follow:
+   color-color   eg: white-blue
+                     fff-00f
+
+available colors: $colorlist
+ available fonts: $fontlist
+
+EOHELP
+  ;
+}
+
+### SETUP PARAMETERS
+my $cols = `tput cols`;
+my $macmode = `uname` =~ m/darwin/i;
+my $cheapmode = $ENV{'TERM'} && $ENV{'TERM'} eq 'linux';
+my $rootmode = $ENV{'USER'} eq 'root';
+$colormode = ( $cheapmode ? 16 : 256 ) unless $colormode;
+die "colors can only by 1,16 or 256\n" unless $colormode =~ m/^(1|16|256)$/;
+$small = 0 if $cheapmode; #no utf8 =x
+$fglab = rgb( 'grey' );
+unless( $fg ) {
+   if( $cheapmode ) { $fg = $rootmode ? "red" : "cyan" }
+   else { $fg = $rootmode ? "f88-fff" : "66c-fff" }
+}
+$fg = rgb( $fg );
+$fontname = ($fontname && exists $FONTS{$fontname}) ? $fontname : 'default';
+$font = $FONTS{$fontname};
+unless( defined($txt) && length($txt) ) {
+   $txt = `hostname`;
+   chomp $txt;
+   $txt = (split( /\./,$txt ))[0];
+   $info = $small ? "imu" : "kicmu"
+}
+
+my @infos;
+for my $c ( split(//,lc($info || '')) ) {
+   my( $l, $i);
+   if( $c eq 'k' ) {
+      $l = 'kernel';
+      $i = `uname -r`;
+      $i = `cat /etc/issue.net`.' - '.$i if -f '/etc/issue.net';
+      $i =~ s/[\n\r]+//g;
+   } elsif( $c eq 'u' ) {
+      $l = 'load/up';
+      my($up,$load,$cf) = ( `uptime` =~ m/up ([^,]+),.+((\d+[\.\,]\d+)[ \,]+\d+[\.\,]\d+[ \,]+\d+[\.\,]\d+)/ );
+      $up = '?' unless defined $up;
+      if( defined $load ) {
+         $cf =~ s/,/./;
+      } else {
+         $cf = 0;
+         $load = '?';
+      }
+      $i = bar(10, $cf)." $load ($up)";
+   } elsif( $c eq 'i' ) {
+      $l = 'ip';
+      my @ips = grep { ! /255|^127\.0/ } ( `/sbin/ifconfig 2>/dev/null` =~ m/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/gm );
+      $i = join(' / ',@ips);
+   } elsif( $c eq 'c' ) {
+      $l = 'cpu';
+      if( $macmode ) {
+         my $nbcpu = `sysctl -n hw.ncpu`;
+         chomp $nbcpu;
+         my $cpu = `sysctl -n machdep.cpu.brand_string`;
+         chomp $cpu;
+         $i = "$nbcpu x $cpu";
+      } else {
+         my @cpus = grep { /model name/i } ( `cat /proc/cpuinfo` );
+         if( @cpus ) {
+            my $cpu = $cpus[0];
+            $cpu =~ s/^\s*model name\s*\:\s//i;
+            $cpu =~ s/\s\s+/ /g;
+            $i = scalar @cpus.' x '.$cpu;
+         } else {
+            $i = 'not found';
+         }
+      }
+   } elsif( $c eq 'm' ) {
+      $l = 'mem';
+      $i = '?';
+      if( $macmode ) {
+         my $tot = `sysctl -n hw.memsize`;
+         chomp $tot;
+         $tot = int($tot / 1024 / 1024);
+         my $free = `vm_stat | grep "Pages free"`;
+         $free =~ s/\D//gm;
+         $free = int(4096 * $free / 1024 / 1024);
+         my $used = $tot - $free;
+         $i = bar(10, $used / $tot).' '.$used.'mo used / '.$tot.'mo';
+      } else {
+         my @ram = `free -m`;
+         if( @ram ) {
+            @ram = grep { m|Mem| } @ram;
+            if( my $mem = shift @ram ) {
+               my $used = +( split /\s+/, $mem )[2];
+               my $tot = +( split /\s+/, $mem )[1];
+               $i = bar(10, $used / $tot).' '.$used.'mo used / '.$tot.'mo';
+            }
+         }
+      }
+   }
+   if( $i ) {
+      chomp $i;
+      push @infos, labinfo($l,$i);
+   }
+}
+
+### RUN
+
+if( $small ) { smalldraw( $txt, @infos ) }
+else         { draw( $txt, @infos ) }
+
+### LIBS
+
+sub rgb {
+   my $c = shift;
+   return undef if $colormode == 1;
+   return [ @{rgb($1)}, @{rgb($2)} ] if $c =~ /^([^-]+)-(.*)$/; #gradient
+   my( $r, $g, $b ) = ( 0, 0, 0 );
+   if( $c =~ m{^(\d+),(\d+),(\d+)} ) {
+      ( $r, $g, $b ) = ( $1, $2, $3 );
+   } elsif( $c =~ m{^([a-f0-9]+):([a-f0-9]+):([a-f0-9]+)}i ) {
+      ( $r, $g, $b ) = ( hex($1), hex($2), hex($3) );
+   } elsif( $c =~ m{^([a-f0-9]{2})([a-f0-9]{2})([a-f0-9]{2})}i ) {
+      ( $r, $g, $b ) = ( hex($1), hex($2), hex($3) );
+   } elsif( exists $COLORS{$c} ) {
+      ( $r, $g, $b ) = @{$COLORS{$c}};
+   } elsif( $c =~ m{^([a-f0-9])([a-f0-9])([a-f0-9])}i ) {
+      ( $r, $g, $b ) = ( hex("$1$1"), hex("$2$2"), hex("$3$3") );
+   }
+   #256 colors
+   return [ $r, $g, $b ] if $colormode == 256;
+   #16 colors
+   my $near;
+   my $delta = 0xff*3;
+   for( keys %SYSCOLORNAMES ) {
+      my $n = $SYSCOLORNAMES{$_};
+      my ($nr, $ng, $nb ) = @{$COLORS{$_}};
+      my $d = abs($r - $nr) + abs($g - $ng) + abs($b - $nb);
+      if( $d < $delta ) {
+         $near = $n;
+         $delta = $d;
+      }
+   }
+   return [ $near ];
+}
+
+sub termcolor {
+   return "" unless @_;
+   my( $bg, $r, $g, $b ) = @_;
+   if( $colormode == 16 ) {
+      $r +=10 if $bg;
+      return "\e[${r}m";
+   }
+   state $cf;
+   unless( $cf ) {
+      for my $r ( 0..5 ) {
+         for my $g ( 0..5 ) {
+            for my $b ( 0..5 ) {
+               printf("\x1b]4;%d;rgb:%02x/%02x/%02x\x1b\\",
+                  16 + ($r * 36) + ($g * 6) + $b,
+                  $r * 51, $g * 51, $b * 51
+               );
+            }
+         }
+      }
+      $cf = 6/256;
+   }
+   my $col = 16 + int($cf * $r) * 36 + int($cf * $g) * 6 + int($cf * $b);
+   return $bg ? "\x1b[48;5;${col}m" : "\x1b[38;5;${col}m";
+}
+
+sub color {
+   my( $fg, $bg ) = @_;
+   my $c = '';
+   $c .= termcolor( 0, @$fg ) if $fg;
+   $c .= termcolor( 1, @$bg ) if $bg;
+   $c;
+}
+
+sub gradient {
+   my( $c, $r ) = @_;
+   return undef unless $c;
+   6 != @$c ? $c : [
+      $c->[0] + int($r * ( $c->[3] - $c->[0] )),
+      $c->[1] + int($r * ( $c->[4] - $c->[1] )),
+      $c->[2] + int($r * ( $c->[5] - $c->[2] )),
+   ];
+}
+
+sub nocolor {
+   $colormode == 1
+      ? ""
+      : $colormode == 16
+         ? "\e[0m"
+         : "\x1b[0m";
+}
+
+sub textidx {
+   my $t = lc shift;
+   $t =~ s/[éèêë]/e/g;
+   $t =~ s/[àâä]/a/g;
+   $t =~ s/[ûü]/u/g;
+   $t =~ s/[îï]/i/g;
+   $t =~ s/[ÿŷ]/y/g;
+   my @o;
+   my $dft = index($font->{charset},'?');
+   for( split //,$t ) {
+      my $i = index($font->{charset},$_);
+      push @o, $i<0 ? $dft : $i;
+   }
+   @o;
+}
+
+sub charswidth {
+   my @chr = @_;
+   my $l = @chr;
+   $l += length( $font->{bmp}->[0]->[$_] ) for @chr;
+   $l;
+}
+
+sub draw {
+   binmode(STDOUT,":utf8");
+   my $txt = shift @_;
+   my @chr = textidx $txt;
+   my @cmt = @_;
+   my $bmp = $font->{bmp};
+   my $h   = @{$font->{bmp}};
+   my $w   = charswidth( @chr );
+   die "text \"$txt\" too large\n" if $cols && $cols < $w;
+   for my $y ( 0..$h-1 ) {
+      my $r = 0;
+      for my $c ( @chr ) {
+         for( split(//,$bmp->[$y]->[$c].' ') ) {
+            s/\./ /;
+            print color(gradient($fg,$r/$w)).$_;
+            $r++;
+         }
+      }
+      print nocolor().$cmt[$y] if $cmt[$y];
+      print "\n";
+   }
+}
+
+sub smalldraw {
+   my @dots = (' ','▘','▝','▀','▖','▌','▞','▛','▗','▚','▐','▜','▃','▙','▟','█');
+   binmode(STDOUT,":utf8");
+   my $txt = shift @_;
+   my @chr = textidx $txt;
+   my @cmt = @_;
+   my $bmp = $font->{bmp};
+   my $h   = @{$font->{bmp}};
+   my $col = $bg ? "$fg on_$bg" : $fg;
+   my $w   = charswidth( @chr ) / 2;
+   die "text \"$txt\" too large\n" if $cols && $cols < $w;
+   for(my $y=0; $y<$h; $y+=2) {
+      my $r = 0;
+      for my $c ( @chr ) {
+         my @l1 = split(//,$bmp->[$y]->[$c].'.');
+         my @l2 = $y+1<$h ? split(//,$bmp->[$y+1]->[$c].'.') : ();
+         for(my $j=0; $j<@l1; $j+=2) {
+            my $b = 0;
+            $b += 1 if $l1[$j] ne '.';
+            $b += 2 if $l1[$j+1] && $l1[$j+1] ne '.';
+            $b += 4 if $l2[$j]   && $l2[$j] ne '.';
+            $b += 8 if $l2[$j+1] && $l2[$j+1] ne '.';
+            print color(gradient($fg,$r/$w)),$dots[$b];
+            $r++;
+         }
+      }
+      print $cmt[$y>>1] if $cmt[$y>>1];
+      print "\n";
+   }
+}
+
+sub labinfo {
+   my( $label, $info ) = @_;
+   color($fglab).sprintf("%-7s: ",$label).nocolor.$info;
+}
+
+sub bar {
+   my( $width, $cf ) = @_;
+   my @chr = $cheapmode ? ('#','-') : ('◼','◻');
+   $cf = 1 if $cf > 1;
+   my $used = int( $width * $cf );
+   my $free = $width - $used;
+   my $col = $cf > .8 ? 'red' : $cf > .5 ? 'yellow' : 'green';
+   color(rgb($col)).($chr[0] x $used).nocolor.($chr[1] x $free);
+}
+
+0;
