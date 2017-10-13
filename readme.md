@@ -48,7 +48,7 @@ available colors: black,blue,bright_black,bright_blue,bright_cyan,bright_green,b
 
 ```shell
 mkdir -p ~/bin
-wget -q -O ~/bin/hi https://github.com/nikopol/hi/blob/master/hi?raw=true
+wget -q -O ~/bin/hi 'https://github.com/nikopol/hi/blob/master/hi?raw=true'
 chmod +x ~/bin/hi
 ```
 
