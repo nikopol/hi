@@ -9,7 +9,7 @@ sample output of `hi -s`
 
 ## --help
 ```
-hi 0.3
+hi 0.4
 
  syntax: hi [-options] [text]
 
