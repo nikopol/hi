@@ -3,7 +3,7 @@
 script dedicated to display infos about your host at the start of a shell session.  
 it works on linux & osx and requires a terminal with unicode and 256+ colors support.
 
-sample output of `hi -s`  
+sample output of `hi -s`:
 ![screenshot](https://github.com/nikopol/hi/blob/master/hi.png?raw=true "hi -s")
 
 
@@ -52,12 +52,16 @@ wget -q -O ~/bin/hi 'https://github.com/nikopol/hi/blob/master/hi?raw=true'
 chmod +x ~/bin/hi
 ```
 
-### add it to your shell starting file
-
-bash for example :
+### with Homebrew
 
 ```shell
-echo '
-[ -t 1 ] && [ -f ~/bin/hi ] && ~/bin/hi -s
-' >> ~/.bashrc
+brew install bfontaine/utils/hi
+```
+
+### add it to your shell starting file
+
+Bash for example:
+
+```shell
+echo '[ -t 1 ] && [ -x ~/bin/hi ] && ~/bin/hi -s' >> ~/.bashrc
 ```
