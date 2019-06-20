@@ -147,6 +147,7 @@ unless( defined($txt) && length($txt) ) {
 my $nocolor = $colormode == 16  ? "\e[0m" :
               $colormode == 256 ? "\x1b[0m" :
               "";
+my @barchr = $cheapmode ? ('#','-') : ('◼','◻');
 
 my @infos;
 for my $c ( split(//,lc($info || '')) ) {
@@ -388,12 +389,11 @@ sub labinfo {
 
 sub bar {
    my( $width, $cf ) = @_;
-   my @chr = $cheapmode ? ('#','-') : ('◼','◻');
    $cf = 1 if $cf > 1;
    my $used = int( $width * $cf );
    my $free = $width - $used;
    my $col = $cf > .8 ? 'red' : $cf > .5 ? 'yellow' : 'green';
-   color(rgb($col)).($chr[0] x $used).$nocolor.($chr[1] x $free);
+   color(rgb($col)).($barchr[0] x $used).$nocolor.($barchr[1] x $free);
 }
 
 0;
