@@ -4,6 +4,7 @@ script dedicated to display infos about your host at the start of a shell sessio
 it works on linux & osx and requires a terminal with unicode and 256+ colors support.
 
 sample output of `hi -s`
+
 ![screenshot](https://github.com/nikopol/hi/blob/master/hi.png?raw=true "hi -s")
 
 
