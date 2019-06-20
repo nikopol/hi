@@ -6,7 +6,7 @@ use warnings;
 use utf8;
 use 5.010;
 
-my $VERSION = '0.4';
+my $VERSION = '0.5';
 
 my %FONTS = (
    default => {
@@ -44,7 +44,7 @@ my %COLORS = (
 );
 
 my %SYSCOLORNAMES = (
-   black   => 30, bright_black   => 90, 
+   black   => 30, bright_black   => 90,
    red     => 31, bright_red     => 91,
    green   => 32, bright_green   => 92,
    yellow  => 33, bright_yellow  => 93,
@@ -349,8 +349,8 @@ sub draw {
             $r++;
          }
       }
-      print nocolor().$cmt[$y] if $cmt[$y];
-      print "\n";
+      print nocolor.$cmt[$y] if $cmt[$y];
+      print nocolor."\n";
    }
 }
 
@@ -381,7 +381,7 @@ sub smalldraw {
          }
       }
       print $cmt[$y>>1] if $cmt[$y>>1];
-      print "\n";
+      print nocolor."\n";
    }
 }
 
