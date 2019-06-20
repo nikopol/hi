@@ -228,7 +228,6 @@ for my $c ( split(//,lc($info || '')) ) {
 binmode(STDOUT,":utf8");
 if( $small ) { smalldraw( $txt, @infos ) }
 else         { draw( $txt, @infos ) }
-print $nocolor."\n";
 
 ### LIBS
 
@@ -349,6 +348,7 @@ sub draw {
          }
       }
       print $nocolor.$cmt[$y] if $cmt[$y];
+      print $nocolor."\n";
    }
 }
 
