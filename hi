@@ -144,6 +144,10 @@ unless( defined($txt) && length($txt) ) {
    $info = $small ? "imu" : "kicmu"
 }
 
+my $nocolor = $colormode == 16  ? "\e[0m" :
+              $colormode == 256 ? "\x1b[0m" :
+              "";
+
 my @infos;
 for my $c ( split(//,lc($info || '')) ) {
    my( $l, $i);
@@ -300,14 +304,6 @@ sub gradient {
    ];
 }
 
-sub nocolor {
-   $colormode == 1
-      ? ""
-      : $colormode == 16
-         ? "\e[0m"
-         : "\x1b[0m";
-}
-
 sub textidx {
    my $t = lc shift;
    $t =~ s/[éèêë]/e/g;
@@ -349,8 +345,8 @@ sub draw {
             $r++;
          }
       }
-      print nocolor.$cmt[$y] if $cmt[$y];
-      print nocolor."\n";
+      print $nocolor.$cmt[$y] if $cmt[$y];
+      print $nocolor."\n";
    }
 }
 
@@ -381,13 +377,13 @@ sub smalldraw {
          }
       }
       print $cmt[$y>>1] if $cmt[$y>>1];
-      print nocolor."\n";
+      print $nocolor."\n";
    }
 }
 
 sub labinfo {
    my( $label, $info ) = @_;
-   color($fglab).sprintf("%-7s: ",$label).nocolor.$info;
+   color($fglab).sprintf("%-7s: ",$label).$nocolor.$info;
 }
 
 sub bar {
@@ -397,7 +393,7 @@ sub bar {
    my $used = int( $width * $cf );
    my $free = $width - $used;
    my $col = $cf > .8 ? 'red' : $cf > .5 ? 'yellow' : 'green';
-   color(rgb($col)).($chr[0] x $used).nocolor.($chr[1] x $free);
+   color(rgb($col)).($chr[0] x $used).$nocolor.($chr[1] x $free);
 }
 
 0;
