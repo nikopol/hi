@@ -54,6 +54,8 @@ my %SYSCOLORNAMES = (
    white   => 37, bright_white   => 97,
 );
 
+my @SMALLDOTS = (' ','▘','▝','▀','▖','▌','▞','▛','▗','▚','▐','▜','▃','▙','▟','█');
+
 ### PARSE ARGS
 
 my( $fg, $bg, $fglab, $font , $small, $fontname, $info, $help, $txt, $colormode );
@@ -199,10 +201,9 @@ for my $c ( split(//,lc($info || '')) ) {
          my $tot = `sysctl -n hw.memsize`;
          chomp $tot;
          $tot = int($tot / 1024 / 1024);
-         my $free = `vm_stat | grep "Pages free"`;
-         $free =~ s/\D//gm;
-         $free = int(4096 * $free / 1024 / 1024);
-         my $used = $tot - $free;
+         my $used = `vm_stat | grep "Pages active"`;
+         $used =~ s/\D//gm;
+         $used = int(4096 * $used / 1024 / 1024);
          $i = bar(10, $used / $tot).' '.$used.'mo used / '.$tot.'mo';
       } else {
          my @ram = `free -m`;
@@ -224,8 +225,10 @@ for my $c ( split(//,lc($info || '')) ) {
 
 ### RUN
 
+binmode(STDOUT,":utf8");
 if( $small ) { smalldraw( $txt, @infos ) }
 else         { draw( $txt, @infos ) }
+print $nocolor."\n";
 
 ### LIBS
 
@@ -329,7 +332,6 @@ sub charswidth {
 }
 
 sub draw {
-   binmode(STDOUT,":utf8");
    my $txt = shift @_;
    my @chr = textidx $txt;
    my @cmt = @_;
@@ -347,13 +349,10 @@ sub draw {
          }
       }
       print $nocolor.$cmt[$y] if $cmt[$y];
-      print $nocolor."\n";
    }
 }
 
 sub smalldraw {
-   my @dots = (' ','▘','▝','▀','▖','▌','▞','▛','▗','▚','▐','▜','▃','▙','▟','█');
-   binmode(STDOUT,":utf8");
    my $txt = shift @_;
    my @chr = textidx $txt;
    my @cmt = @_;
@@ -373,7 +372,7 @@ sub smalldraw {
             $b += 2 if $l1[$j+1] && $l1[$j+1] ne '.';
             $b += 4 if $l2[$j]   && $l2[$j] ne '.';
             $b += 8 if $l2[$j+1] && $l2[$j+1] ne '.';
-            print color(gradient($fg,$r/$w)),$dots[$b];
+            print color(gradient($fg,$r/$w)),$SMALLDOTS[$b];
             $r++;
          }
       }
