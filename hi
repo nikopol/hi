@@ -201,9 +201,12 @@ for my $c ( split(//,lc($info || '')) ) {
          my $tot = `sysctl -n hw.memsize`;
          chomp $tot;
          $tot = int($tot / 1024 / 1024);
-         my $used = `vm_stat | grep "Pages active"`;
+         my @vm_stat = `vm_stat`;
+         my $wired = grep { m|Pages wired| } @vm_stat;
+         $wired =~ s/\D//gm;
+         my $used = grep { m|Pages active| } @vm_stat;
          $used =~ s/\D//gm;
-         $used = int(4096 * $used / 1024 / 1024);
+         $used = int(4096 * ($used + $wired) / 1024 / 1024);
          $i = bar(10, $used / $tot).' '.$used.'mo used / '.$tot.'mo';
       } else {
          my @ram = `free -m`;
