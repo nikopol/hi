@@ -202,9 +202,9 @@ for my $c ( split(//,lc($info || '')) ) {
          chomp $tot;
          $tot = int($tot / 1024 / 1024);
          my @vm_stat = `vm_stat`;
-         my $wired = grep { m|Pages wired| } @vm_stat;
+         my $wired = join(' ', grep { m|Pages wired| } @vm_stat);
          $wired =~ s/\D//gm;
-         my $used = grep { m|Pages active| } @vm_stat;
+         my $used = join(' ', grep { m|Pages active| } @vm_stat);
          $used =~ s/\D//gm;
          $used = int(4096 * ($used + $wired) / 1024 / 1024);
          $i = bar(10, $used / $tot).' '.$used.'mo used / '.$tot.'mo';
