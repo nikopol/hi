@@ -6,7 +6,7 @@ use warnings;
 use utf8;
 use 5.010;
 
-my $VERSION = '0.6';
+my $VERSION = '0.7';
 
 my %FONTS = (
    default => {
@@ -58,7 +58,7 @@ my @SMALLDOTS = (' ','▘','▝','▀','▖','▌','▞','▛','▗','▚','▐'
 
 ### PARSE ARGS
 
-my( $fg, $bg, $fglab, $font , $small, $fontname, $info, $help, $txt, $colormode );
+my( $fg, $bg, $fglab, $font , $small, $fontname, $info, $help, $txt, $colormode, $ssh );
 
 for( my $n=0; $n<@ARGV; $n++ ) {
    my $a = $ARGV[$n];
@@ -73,6 +73,7 @@ for( my $n=0; $n<@ARGV; $n++ ) {
       elsif( $a1 =~ /^(1|16|256)$/ )       { $colormode = $a1 }
       elsif( $a1 =~ /^s(mall)?$/i )        { $small = 1 }
       elsif( $a1 =~ /^h(elp)?$/i )         { $help = 1 }
+      elsif( $a1 =~ /^ssh$/i )             { $ssh = $a2 || $ARGV[++$n] }
       else { die "unknown option -$a1\n" }
    } else {
       $txt = length($txt) ? "$txt $a" : $a;
@@ -100,6 +101,7 @@ options:
   -s[mall]          set small mode
   -font=default     font name (avalaible: $fontlist)
   -i[nfo]=kumic     choose info to display
+  -ssh=remote       ssh hostname
 
 infos can be given as follow:
    k=kernel   u=uptime   c=cpumodel
@@ -125,7 +127,7 @@ EOHELP
 
 ### SETUP PARAMETERS
 my $cols = `tput cols`;
-my $macmode = `uname` =~ m/darwin/i;
+my $macmode = shell('uname') =~ m/darwin/i;
 my $cheapmode = $ENV{'TERM'} && $ENV{'TERM'} eq 'linux';
 my $rootmode = $ENV{'USER'} eq 'root';
 $colormode = ( $cheapmode ? 16 : 256 ) unless $colormode;
@@ -140,7 +142,7 @@ $fg = rgb( $fg );
 $fontname = ($fontname && exists $FONTS{$fontname}) ? $fontname : 'default';
 $font = $FONTS{$fontname};
 unless( defined($txt) && length($txt) ) {
-   $txt = `hostname`;
+   $txt = shell('hostname');
    chomp $txt;
    $txt = (split( /\./,$txt ))[0];
    $info = $small ? "imu" : "kicmu"
@@ -153,15 +155,16 @@ my @barchr = $cheapmode ? ('#','-') : ('◼','◻');
 
 my @infos;
 for my $c ( split(//,lc($info || '')) ) {
-   my( $l, $i);
+   my( $l, $i, $z);
    if( $c eq 'k' ) {
       $l = 'kernel';
-      $i = `uname -r`;
-      $i = `cat /etc/issue.net`.' - '.$i if -f '/etc/issue.net';
+      $i = shell('uname -r');
+      $z = shell('cat /etc/issue.net');
+      $i = $z.' - '.$i if $z;
       $i =~ s/[\n\r]+//g;
    } elsif( $c eq 'u' ) {
       $l = 'load/up';
-      my($up,$load,$cf) = ( `uptime` =~ m/up ([^,]+),.+((\d+[\.\,]\d+)[ \,]+\d+[\.\,]\d+[ \,]+\d+[\.\,]\d+)/ );
+      my($up,$load,$cf) = ( shell('uptime') =~ m/up ([^,]+),.+((\d+[\.\,]\d+)[ \,]+\d+[\.\,]\d+[ \,]+\d+[\.\,]\d+)/ );
       $up = '?' unless defined $up;
       if( defined $load ) {
          $cf =~ s/,/./;
@@ -172,19 +175,20 @@ for my $c ( split(//,lc($info || '')) ) {
       $i = bar(10, $cf)." $load ($up)";
    } elsif( $c eq 'i' ) {
       $l = 'ip';
-      my $out = -x '/sbin/ip' ? `/sbin/ip -4 addr 2>/dev/null` : `/sbin/ifconfig 2>/dev/null`;
+      my $out = shell('/sbin/ip -4 addr 2>/dev/null');
+      $out = shell('/sbin/ifconfig 2>/dev/null') unless $out;
       my @ips = grep { ! /255|^127\.0/ } ( $out =~ m/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})/gm );
       $i = join(' / ',@ips);
    } elsif( $c eq 'c' ) {
       $l = 'cpu';
       if( $macmode ) {
-         my $nbcpu = `sysctl -n hw.ncpu`;
+         my $nbcpu = shell('sysctl -n hw.ncpu');
          chomp $nbcpu;
-         my $cpu = `sysctl -n machdep.cpu.brand_string`;
+         my $cpu = shell('sysctl -n machdep.cpu.brand_string');
          chomp $cpu;
          $i = "$nbcpu x $cpu";
       } else {
-         my @cpus = grep { /model name/i } ( `cat /proc/cpuinfo` );
+         my @cpus = grep { /model name/i } ( shell('cat /proc/cpuinfo') );
          if( @cpus ) {
             my $cpu = $cpus[0];
             $cpu =~ s/^\s*model name\s*\:\s//i;
@@ -198,10 +202,10 @@ for my $c ( split(//,lc($info || '')) ) {
       $l = 'mem';
       $i = '?';
       if( $macmode ) {
-         my $tot = `sysctl -n hw.memsize`;
+         my $tot = shell('sysctl -n hw.memsize');
          chomp $tot;
          $tot = int($tot / 1024 / 1024);
-         my @vm_stat = `vm_stat`;
+         my @vm_stat = shell('vm_stat');
          my $wired = join(' ', grep { m|Pages wired| } @vm_stat);
          $wired =~ s/\D//gm;
          my $used = join(' ', grep { m|Pages active| } @vm_stat);
@@ -209,7 +213,7 @@ for my $c ( split(//,lc($info || '')) ) {
          $used = int(4096 * ($used + $wired) / 1024 / 1024);
          $i = bar(10, $used / $tot).' '.$used.'mo used / '.$tot.'mo';
       } else {
-         my @ram = `free -m`;
+         my @ram = shell('free -m');
          if( @ram ) {
             @ram = grep { m|Mem| } @ram;
             if( my $mem = shift @ram ) {
@@ -396,6 +400,11 @@ sub bar {
    my $free = $width - $used;
    my $col = $cf > .8 ? 'red' : $cf > .5 ? 'yellow' : 'green';
    color(rgb($col)).($barchr[0] x $used).$nocolor.($barchr[1] x $free);
+}
+
+sub shell {
+   my $cmd = shift @_;
+   $ssh ? `ssh $ssh "$cmd"` : `$cmd`;
 }
 
 0;
